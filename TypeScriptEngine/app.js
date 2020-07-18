@@ -28,10 +28,10 @@ var GameWindow = /** @class */ (function () {
         var _this = this;
         if (_windowHeight === void 0) { _windowHeight = 720; }
         if (_windowWidth === void 0) { _windowWidth = 1280; }
-        if (_bkColour === void 0) { _bkColour = "grey"; }
+        if (_bkColour === void 0) { _bkColour = "lightGrey"; }
         this.windowHeight = 720;
         this.windowWidth = 1280;
-        this.bkColour = "grey";
+        this.bkColour = "lightGrey";
         this.InitialiseCanvas = function () {
             _this.canvas = document.getElementById('cnvs');
             _this.ctx = _this.canvas.getContext("2d");
@@ -67,41 +67,104 @@ var Time = /** @class */ (function () {
     return Time;
 }()); ///
 ////////////////
+///Prefab Class///
+var Prefab = /** @class */ (function () {
+    function Prefab(_pos, _scale) {
+        var _this = this;
+        this.modules = new Array();
+        this.Transform = {
+            pos: new vec2(0, 0),
+            scale: new vec2(1, 1)
+        };
+        this.AddModule = function (_mod) {
+            //TODO: dont allow modules to be added if label already exists
+            _this.modules.push(_mod);
+        };
+        this.RemoveModule = function (_label) {
+            for (var i = 0; i < _this.modules.length; i++) {
+                if (_this.modules[i].label == _label) {
+                    _this.modules.splice(i, 1);
+                    break;
+                }
+            }
+        };
+        this.Awake = function () {
+            for (var _i = 0, _a = _this.modules; _i < _a.length; _i++) {
+                var mod = _a[_i];
+                mod.Awake(engine, _this);
+            }
+        };
+        this.Update = function (ctx) {
+            for (var _i = 0, _a = _this.modules; _i < _a.length; _i++) {
+                var mod = _a[_i];
+                if (mod.active) {
+                    mod.Update(engine, _this, ctx);
+                }
+            }
+        };
+        this.Transform.pos = _pos;
+        this.Transform.scale = _scale;
+    }
+    return Prefab;
+}()); ///
+//////////////////
+/*
+    ___  ___          _       _
+    |  \/  |         | |     | |
+    | .  . | ___   __| |_   _| | ___  ___
+    | |\/| |/ _ \ / _` | | | | |/ _ \/ __|
+    | |  | | (_) | (_| | |_| | |  __/\__ \
+    \_|  |_/\___/ \__,_|\__,_|_|\___||___/
+ */
+///Module Class///
 var Module = /** @class */ (function () {
-    function Module() {
-        this.Draw = function (_ctx) {
+    function Module(_label) {
+        this.Awake = function (_engine, _obj) {
         };
-        this.Awake = function (_engine) {
+        this.Update = function (_engine, _obj, _ctx) {
         };
-        this.Update = function (_engine) {
-        };
+        this.active = true;
+        this.label = _label;
     }
     return Module;
-}());
-///Rectangle Class///
+}()); ///
+//////////////////
+///Rectangle Class//////////////////
 var Rectangle = /** @class */ (function (_super) {
     __extends(Rectangle, _super);
-    function Rectangle(_x, _y, _width, _height, _lineWidth, _lineColour) {
+    function Rectangle(_label, _x, _y, _width, _height, _lineWidth, _lineColour, _isFilled, _fillColour) {
         if (_x === void 0) { _x = 0; }
         if (_y === void 0) { _y = 0; }
         if (_width === void 0) { _width = 50; }
         if (_height === void 0) { _height = 50; }
         if (_lineWidth === void 0) { _lineWidth = 2; }
         if (_lineColour === void 0) { _lineColour = "black"; }
-        var _this = _super.call(this) || this;
+        if (_isFilled === void 0) { _isFilled = true; }
+        if (_fillColour === void 0) { _fillColour = "white"; }
+        var _this = _super.call(this, _label) || this;
         _this.x = 0;
         _this.y = 0;
         _this.width = 50;
         _this.height = 50;
         _this.lineWidth = 2;
         _this.lineColour = "black";
-        //TODO: drawing needs to be relative to parent object
-        _this.Draw = function (_ctx) {
+        _this.fillColour = "white";
+        _this.isFilled = true;
+        _this.Update = function (_engine, _obj, _ctx) {
+            _this.Draw(_ctx, _obj);
+        };
+        _this.Draw = function (_ctx, _obj) {
             _ctx.save;
             _ctx.beginPath();
             _ctx.strokeStyle = _this.lineColour;
             _ctx.lineWidth = _this.lineWidth;
-            _ctx.rect(_this.x, _this.y, _this.width, _this.height);
+            if (_this.isFilled) {
+                _ctx.fillStyle = _this.fillColour;
+                _ctx.fillRect(_obj.Transform.pos.x + _this.x, _obj.Transform.pos.y + _this.y, _obj.Transform.scale.x * _this.width, _obj.Transform.scale.y * _this.height);
+            }
+            else {
+                _ctx.rect(_obj.Transform.pos.x + _this.x, _obj.Transform.pos.y + _this.y, _obj.Transform.scale.x * _this.width, _obj.Transform.scale.y * _this.height);
+            }
             _ctx.stroke();
             _ctx.restore();
         };
@@ -111,42 +174,66 @@ var Rectangle = /** @class */ (function (_super) {
         _this.height = _height;
         _this.lineWidth = _lineWidth;
         _this.lineColour = _lineColour;
+        _this.fillColour = _fillColour;
+        _this.isFilled = _isFilled;
         return _this;
     }
     return Rectangle;
 }(Module)); ///
-/////////////////////
-var GameObject = /** @class */ (function () {
-    function GameObject(_pos, _scale) {
-        var _this = this;
-        this.modules = new Array();
-        this.Transform = {
-            pos: new vec2(0, 0),
-            scale: new vec2(1, 1)
+////////////////////////////////////
+///Circle Class//////////////////
+var Circle = /** @class */ (function (_super) {
+    __extends(Circle, _super);
+    function Circle(_label, _x, _y, _radius, _lineWidth, _lineColour, _isFilled, _fillColour) {
+        if (_x === void 0) { _x = 0; }
+        if (_y === void 0) { _y = 0; }
+        if (_radius === void 0) { _radius = 50; }
+        if (_lineWidth === void 0) { _lineWidth = 2; }
+        if (_lineColour === void 0) { _lineColour = "black"; }
+        if (_isFilled === void 0) { _isFilled = true; }
+        if (_fillColour === void 0) { _fillColour = "white"; }
+        var _this = _super.call(this, _label) || this;
+        _this.x = 0;
+        _this.y = 0;
+        _this.radius = 50;
+        _this.lineWidth = 2;
+        _this.lineColour = "black";
+        _this.fillColour = "white";
+        _this.isFilled = true;
+        _this.Update = function (_engine, _obj, _ctx) {
+            _this.Draw(_ctx, _obj);
         };
-        this.Awake = function () {
-            for (var _i = 0, _a = _this.modules; _i < _a.length; _i++) {
-                var mod = _a[_i];
-                mod.Awake(engine);
+        //TODO: scale probably should use y as well
+        _this.Draw = function (_ctx, _obj) {
+            _ctx.save;
+            _ctx.beginPath();
+            _ctx.strokeStyle = _this.lineColour;
+            _ctx.lineWidth = _this.lineWidth;
+            if (_this.isFilled) {
+                _ctx.arc(_obj.Transform.pos.x + _this.x, _obj.Transform.pos.y + _this.y, _obj.Transform.scale.x * _this.radius, 0, 2 * Math.PI);
+                _ctx.fillStyle = _this.fillColour;
+                _ctx.fill();
             }
-        };
-        this.Update = function (ctx) {
-            for (var _i = 0, _a = _this.modules; _i < _a.length; _i++) {
-                var mod = _a[_i];
-                mod.Update(engine);
-                mod.Draw(ctx);
+            else {
+                _ctx.arc(_obj.Transform.pos.x + _this.x, _obj.Transform.pos.y + _this.y, _obj.Transform.scale.x * _this.radius, 0, 2 * Math.PI);
             }
+            _ctx.stroke();
+            _ctx.restore();
         };
-        this.Transform.pos = _pos;
-        this.Transform.pos = _scale;
+        _this.x = _x;
+        _this.y = _y;
+        _this.radius = _radius;
+        _this.lineWidth = _lineWidth;
+        _this.lineColour = _lineColour;
+        _this.fillColour = _fillColour;
+        _this.isFilled = _isFilled;
+        return _this;
     }
-    GameObject.prototype.AddModule = function (_mod) {
-        this.modules.push(_mod);
-    };
-    return GameObject;
-}());
-var EngineObject = /** @class */ (function () {
-    function EngineObject(_gameObject, _id) {
+    return Circle;
+}(Module)); ///
+////////////////////////////////////
+var GameObject = /** @class */ (function () {
+    function GameObject(_gameObject, _id) {
         var _this = this;
         //TODO: Remove if nothing else is added or leave if needed for support of child objects
         this.Update = function (ctx) {
@@ -155,7 +242,7 @@ var EngineObject = /** @class */ (function () {
         this.id = _id;
         this.gameObject = _gameObject;
     }
-    return EngineObject;
+    return GameObject;
 }());
 var Engine = /** @class */ (function () {
     function Engine(_gameWindow) {
@@ -178,7 +265,7 @@ var Engine = /** @class */ (function () {
             _this.gameWindow.DrawCanvas();
         };
         this.Instantiate = function (_obj) {
-            var newObj = new EngineObject(_obj, _this.globalObjIdCount);
+            var newObj = new GameObject(_obj, _this.globalObjIdCount);
             _this.gameObjects.push(newObj);
             _this.globalObjIdCount++;
         };
@@ -197,13 +284,15 @@ var Engine = /** @class */ (function () {
 }());
 var gameWindow = new GameWindow();
 var engine = new Engine(gameWindow);
+//Main GameLoop Function//
 function GameLoop() {
     requestAnimationFrame(GameLoop);
     engine.Update();
-}
+} ///
+/////////////////////////
 window.onload = function () {
     engine.InitialiseEngine();
-    InitialGameObjects();
+    CreateInitialGameObjects();
     //Call each gameobjects Awake function
     for (var _i = 0, _a = engine.gameObjects; _i < _a.length; _i++) {
         var engineObj = _a[_i];
@@ -211,12 +300,28 @@ window.onload = function () {
     }
     GameLoop();
 };
-function InitialGameObjects() {
-    var rect = new Rectangle(10, 10, 200, 100, 2, "red");
-    var rect2 = new Rectangle(50, 50, 80, 300, 2, "blue");
-    var obj = new GameObject(new vec2(0, 0), new vec2(1, 1));
+function pTestPrefab() {
+    //Basic game object with 2 rectangles and a circle
+    var rect = new Rectangle("rect", 10, 10, 200, 100, 2, "red", false);
+    var rect2 = new Rectangle("rect2", 50, 50, 80, 300, 2, "blue", true, "green");
+    var circ = new Circle("circ", 20, 60, 50, 5, "black", true, "orange");
+    var obj = new Prefab(new vec2(0, 0), new vec2(1, 1));
     obj.AddModule(rect);
     obj.AddModule(rect2);
-    engine.Instantiate(obj);
+    obj.AddModule(circ);
+    return obj;
+}
+//Any game objects that should exist on launch should be declared here
+function CreateInitialGameObjects() {
+    //A game object can be created from a prefab by calling the prefab declaration directly
+    //This will create it exactly how it is defined
+    engine.Instantiate(pTestPrefab());
+    //Or it can be created through the prefab function then modified before being instantiated
+    var otherTwoRect = pTestPrefab();
+    otherTwoRect.Transform.pos.x = 200;
+    otherTwoRect.Transform.pos.y = 200;
+    otherTwoRect.Transform.scale.x = 2;
+    otherTwoRect.Transform.scale.y = 2;
+    engine.Instantiate(otherTwoRect);
 }
 //# sourceMappingURL=app.js.map
