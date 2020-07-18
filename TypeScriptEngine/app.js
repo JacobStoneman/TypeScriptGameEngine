@@ -129,7 +129,7 @@ var Module = /** @class */ (function () {
     return Module;
 }()); ///
 //////////////////
-///Rectangle Class//////////////////
+///Rectangle Module//////////////////
 var Rectangle = /** @class */ (function (_super) {
     __extends(Rectangle, _super);
     function Rectangle(_label, _x, _y, _width, _height, _lineWidth, _lineColour, _isFilled, _fillColour) {
@@ -181,7 +181,7 @@ var Rectangle = /** @class */ (function (_super) {
     return Rectangle;
 }(Module)); ///
 ////////////////////////////////////
-///Circle Class//////////////////
+///Circle Module//////////////////
 var Circle = /** @class */ (function (_super) {
     __extends(Circle, _super);
     function Circle(_label, _x, _y, _radius, _lineWidth, _lineColour, _isFilled, _fillColour) {
@@ -209,13 +209,10 @@ var Circle = /** @class */ (function (_super) {
             _ctx.beginPath();
             _ctx.strokeStyle = _this.lineColour;
             _ctx.lineWidth = _this.lineWidth;
+            _ctx.arc(_obj.Transform.pos.x + _this.x, _obj.Transform.pos.y + _this.y, _obj.Transform.scale.x * _this.radius, 0, 2 * Math.PI);
             if (_this.isFilled) {
-                _ctx.arc(_obj.Transform.pos.x + _this.x, _obj.Transform.pos.y + _this.y, _obj.Transform.scale.x * _this.radius, 0, 2 * Math.PI);
                 _ctx.fillStyle = _this.fillColour;
                 _ctx.fill();
-            }
-            else {
-                _ctx.arc(_obj.Transform.pos.x + _this.x, _obj.Transform.pos.y + _this.y, _obj.Transform.scale.x * _this.radius, 0, 2 * Math.PI);
             }
             _ctx.stroke();
             _ctx.restore();
@@ -230,6 +227,56 @@ var Circle = /** @class */ (function (_super) {
         return _this;
     }
     return Circle;
+}(Module)); ///
+////////////////////////////////////
+///Polygon Module//////////////////
+var Polygon = /** @class */ (function (_super) {
+    __extends(Polygon, _super);
+    function Polygon(_label, _x, _y, _pointList, _lineWidth, _lineColour, _isFilled, _fillColour) {
+        if (_x === void 0) { _x = 0; }
+        if (_y === void 0) { _y = 0; }
+        if (_lineWidth === void 0) { _lineWidth = 2; }
+        if (_lineColour === void 0) { _lineColour = "black"; }
+        if (_isFilled === void 0) { _isFilled = true; }
+        if (_fillColour === void 0) { _fillColour = "white"; }
+        var _this = _super.call(this, _label) || this;
+        _this.x = 0;
+        _this.y = 0;
+        _this.lineWidth = 2;
+        _this.lineColour = "black";
+        _this.fillColour = "white";
+        _this.isFilled = true;
+        _this.pointList = new Array();
+        _this.Update = function (_engine, _obj, _ctx) {
+            _this.Draw(_ctx, _obj);
+        };
+        _this.Draw = function (_ctx, _obj) {
+            _ctx.save;
+            _ctx.beginPath();
+            _ctx.strokeStyle = _this.lineColour;
+            _ctx.lineWidth = _this.lineWidth;
+            _ctx.moveTo(_obj.Transform.pos.x + _this.x + _this.pointList[_this.pointList.length - 1].x, _obj.Transform.pos.y + _this.y + _this.pointList[_this.pointList.length - 1].y);
+            for (var i = 0; i < _this.pointList.length; i++) {
+                _ctx.lineTo(_obj.Transform.pos.x + _this.x + _this.pointList[i].x, _obj.Transform.pos.y + _this.y + _this.pointList[i].y);
+            }
+            if (_this.isFilled) {
+                _ctx.fillStyle = _this.fillColour;
+                _ctx.fill();
+            }
+            _ctx.closePath();
+            _ctx.stroke();
+            _ctx.restore();
+        };
+        _this.x = _x;
+        _this.y = _y;
+        _this.pointList = _pointList;
+        _this.lineWidth = _lineWidth;
+        _this.lineColour = _lineColour;
+        _this.fillColour = _fillColour;
+        _this.isFilled = _isFilled;
+        return _this;
+    }
+    return Polygon;
 }(Module)); ///
 ////////////////////////////////////
 var GameObject = /** @class */ (function () {
@@ -305,10 +352,21 @@ function pTestPrefab() {
     var rect = new Rectangle("rect", 10, 10, 200, 100, 2, "red", false);
     var rect2 = new Rectangle("rect2", 50, 50, 80, 300, 2, "blue", true, "green");
     var circ = new Circle("circ", 20, 60, 50, 5, "black", true, "orange");
+    var pointList = new Array();
+    var p1 = new vec2(10, 50);
+    var p2 = new vec2(60, 30);
+    var p3 = new vec2(20, 10);
+    var p4 = new vec2(90, 70);
+    pointList.push(p1);
+    pointList.push(p3);
+    pointList.push(p2);
+    pointList.push(p4);
+    var poly = new Polygon("poly", 20, 60, pointList, 3, "black", true, "blue");
     var obj = new Prefab(new vec2(0, 0), new vec2(1, 1));
     obj.AddModule(rect);
     obj.AddModule(rect2);
     obj.AddModule(circ);
+    obj.AddModule(poly);
     return obj;
 }
 //Any game objects that should exist on launch should be declared here

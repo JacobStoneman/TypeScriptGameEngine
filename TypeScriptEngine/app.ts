@@ -123,7 +123,7 @@ class Module {
     }
 }///
 //////////////////
-///Rectangle Class//////////////////
+///Rectangle Module//////////////////
 class Rectangle extends Module{
     public x: number = 0;
     public y: number = 0;
@@ -166,7 +166,7 @@ class Rectangle extends Module{
     }
 }///
 ////////////////////////////////////
-///Circle Class//////////////////
+///Circle Module//////////////////
 class Circle extends Module {
     public x: number = 0;
     public y: number = 0;
@@ -197,19 +197,63 @@ class Circle extends Module {
         _ctx.beginPath();
         _ctx.strokeStyle = this.lineColour;
         _ctx.lineWidth = this.lineWidth;
+        _ctx.arc(_obj.Transform.pos.x + this.x, _obj.Transform.pos.y + this.y, _obj.Transform.scale.x * this.radius, 0, 2 * Math.PI);
         if (this.isFilled) {
-            _ctx.arc(_obj.Transform.pos.x + this.x, _obj.Transform.pos.y + this.y, _obj.Transform.scale.x * this.radius, 0, 2 * Math.PI);
             _ctx.fillStyle = this.fillColour;
             _ctx.fill();
-        } else {
-            _ctx.arc(_obj.Transform.pos.x + this.x, _obj.Transform.pos.y + this.y, _obj.Transform.scale.x * this.radius, 0, 2 * Math.PI);
         }
         _ctx.stroke();
         _ctx.restore();
     }
 }///
 ////////////////////////////////////
+///Polygon Module//////////////////
+class Polygon extends Module {
+    public x: number = 0;
+    public y: number = 0;
+    public lineWidth: number = 2;
+    public lineColour: string = "black";
+    public fillColour: string = "white";
+    public isFilled: boolean = true;
+    public pointList: Array<vec2> = new Array<vec2>();
 
+    constructor(_label: string, _x: number = 0, _y: number = 0, _pointList: Array<vec2>, _lineWidth: number = 2, _lineColour: string = "black", _isFilled: boolean = true, _fillColour: string = "white") {
+        super(_label);
+        this.x = _x;
+        this.y = _y;
+        this.pointList = _pointList;
+        this.lineWidth = _lineWidth;
+        this.lineColour = _lineColour;
+        this.fillColour = _fillColour;
+        this.isFilled = _isFilled;
+    }
+
+    public Update = (_engine: Engine, _obj: Prefab, _ctx): void => {
+        this.Draw(_ctx, _obj);
+    }
+
+    private Draw = (_ctx: CanvasRenderingContext2D, _obj: Prefab): void => {
+        _ctx.save;
+        _ctx.beginPath();
+        _ctx.strokeStyle = this.lineColour;
+        _ctx.lineWidth = this.lineWidth;
+
+        _ctx.moveTo(_obj.Transform.pos.x + this.x + this.pointList[this.pointList.length - 1].x, _obj.Transform.pos.y +this.y + this.pointList[this.pointList.length - 1].y);
+        for (let i = 0; i < this.pointList.length; i++) {
+            _ctx.lineTo(_obj.Transform.pos.x + this.x + this.pointList[i].x, _obj.Transform.pos.y + this.y + this.pointList[i].y)
+        }
+
+        if (this.isFilled) {
+            _ctx.fillStyle = this.fillColour;
+            _ctx.fill();
+        }
+
+        _ctx.closePath();
+        _ctx.stroke();
+        _ctx.restore();
+    }
+}///
+////////////////////////////////////
 
 class GameObject {
     readonly id;
@@ -301,10 +345,23 @@ function pTestPrefab (): Prefab {
     let rect: Rectangle = new Rectangle("rect", 10, 10, 200, 100, 2, "red",false);
     let rect2: Rectangle = new Rectangle("rect2", 50, 50, 80, 300, 2, "blue", true, "green");
     let circ: Circle = new Circle("circ", 20, 60, 50, 5, "black", true, "orange");
+
+    let pointList = new Array<vec2>();
+    let p1 = new vec2(10, 50);
+    let p2 = new vec2(60, 30);
+    let p3 = new vec2(20, 10);
+    let p4 = new vec2(90, 70);
+    pointList.push(p1);
+    pointList.push(p3);
+    pointList.push(p2);
+    pointList.push(p4);
+    let poly: Polygon = new Polygon("poly", 20, 60, pointList, 3, "black", true, "blue");
+
     var obj: Prefab = new Prefab(new vec2(0, 0), new vec2(1, 1));
     obj.AddModule(rect);
     obj.AddModule(rect2);
     obj.AddModule(circ);
+    obj.AddModule(poly);
 
     return obj;
 }
