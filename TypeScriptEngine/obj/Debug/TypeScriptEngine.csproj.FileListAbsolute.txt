@@ -1,0 +1,10 @@
+C:\Users\Jacob\Documents\Files\Typescript\TypeScriptEngine\TypeScriptEngine\bin\TypeScriptHTMLApp1.dll
+C:\Users\Jacob\Documents\Files\Typescript\TypeScriptEngine\TypeScriptEngine\bin\TypeScriptHTMLApp1.pdb
+C:\Users\Jacob\Documents\Files\Typescript\TypeScriptEngine\TypeScriptEngine\obj\Debug\TypeScriptEngine.csprojAssemblyReference.cache
+C:\Users\Jacob\Documents\Files\Typescript\TypeScriptEngine\TypeScriptEngine\obj\Debug\TypeScriptHTMLApp1.dll
+C:\Users\Jacob\Documents\Files\Typescript\TypeScriptEngine\TypeScriptEngine\obj\Debug\TypeScriptHTMLApp1.pdb
+C:\Users\Jacob\Documents\Files\Typescript\TypeScriptEngine\TypeScriptGameEngine\TypeScriptEngine\bin\TypeScriptHTMLApp1.dll
+C:\Users\Jacob\Documents\Files\Typescript\TypeScriptEngine\TypeScriptGameEngine\TypeScriptEngine\bin\TypeScriptHTMLApp1.pdb
+C:\Users\Jacob\Documents\Files\Typescript\TypeScriptEngine\TypeScriptGameEngine\TypeScriptEngine\obj\Debug\TypeScriptEngine.csprojAssemblyReference.cache
+C:\Users\Jacob\Documents\Files\Typescript\TypeScriptEngine\TypeScriptGameEngine\TypeScriptEngine\obj\Debug\TypeScriptHTMLApp1.dll
+C:\Users\Jacob\Documents\Files\Typescript\TypeScriptEngine\TypeScriptGameEngine\TypeScriptEngine\obj\Debug\TypeScriptHTMLApp1.pdb
