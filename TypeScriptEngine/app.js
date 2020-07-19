@@ -108,6 +108,26 @@ var Prefab = /** @class */ (function () {
     return Prefab;
 }()); ///
 //////////////////
+//Globals/////////////////
+var mouseX = 0; ///
+var mouseY = 0; ///
+//////////////////////////
+///Tracks Mouse Events/////////////////////////////////////
+document.addEventListener('mousemove', OnMouseUpdate, false);
+document.addEventListener('mouseenter', OnMouseUpdate, false);
+document.addEventListener('mousedown', OnMouseDown, false);
+document.addEventListener('mouseup', OnMouseUp, false);
+function OnMouseDown(e) {
+    engine.OnMouseDown();
+}
+function OnMouseUp(e) {
+    engine.OnMouseUp();
+}
+function OnMouseUpdate(e) {
+    mouseX = e.pageX;
+    mouseY = e.pageY;
+}
+/////////////////////////////////////////////////////////////
 /*
     ___  ___          _       _
     |  \/  |         | |     | |
@@ -116,9 +136,14 @@ var Prefab = /** @class */ (function () {
     | |  | | (_) | (_| | |_| | |  __/\__ \
     \_|  |_/\___/ \__,_|\__,_|_|\___||___/
  */
-///Module Class///
+///Module Class////////////////
+///Parent of all module tpyes//
 var Module = /** @class */ (function () {
     function Module(_label) {
+        this.OnMouseDown = function (_engine, _obj) {
+        };
+        this.OnMouseUp = function (_engine, _obj) {
+        };
         this.Awake = function (_engine, _obj) {
         };
         this.Update = function (_engine, _obj, _ctx) {
@@ -127,9 +152,10 @@ var Module = /** @class */ (function () {
         this.label = _label;
     }
     return Module;
-}()); ///
-//////////////////
-///Rectangle Module//////////////////
+}()); ///////////////
+//////////////////////////////
+///Rectangle Module/////////////////
+///Renders basic rectangle//////////
 var Rectangle = /** @class */ (function (_super) {
     __extends(Rectangle, _super);
     function Rectangle(_label, _x, _y, _width, _height, _lineWidth, _lineColour, _isFilled, _fillColour) {
@@ -160,10 +186,10 @@ var Rectangle = /** @class */ (function (_super) {
             _ctx.lineWidth = _this.lineWidth;
             if (_this.isFilled) {
                 _ctx.fillStyle = _this.fillColour;
-                _ctx.fillRect(_obj.Transform.pos.x + _this.x, _obj.Transform.pos.y + _this.y, _obj.Transform.scale.x * _this.width, _obj.Transform.scale.y * _this.height);
+                _ctx.fillRect(_obj.Transform.pos.x + _this.x - ((_this.width / 2) * _obj.Transform.scale.x), _obj.Transform.pos.y + _this.y - ((_this.height / 2) * _obj.Transform.scale.y), _obj.Transform.scale.x * _this.width, _obj.Transform.scale.y * _this.height);
             }
             else {
-                _ctx.rect(_obj.Transform.pos.x + _this.x, _obj.Transform.pos.y + _this.y, _obj.Transform.scale.x * _this.width, _obj.Transform.scale.y * _this.height);
+                _ctx.rect(_obj.Transform.pos.x + _this.x - ((_this.width / 2) * _obj.Transform.scale.x), _obj.Transform.pos.y + _this.y - ((_this.height / 2) * _obj.Transform.scale.y), _obj.Transform.scale.x * _this.width, _obj.Transform.scale.y * _this.height);
             }
             _ctx.stroke();
             _ctx.restore();
@@ -179,9 +205,10 @@ var Rectangle = /** @class */ (function (_super) {
         return _this;
     }
     return Rectangle;
-}(Module)); ///
-////////////////////////////////////
-///Circle Module//////////////////
+}(Module)); //
+///////////////////////////////////
+///Circle Module////////////////
+///Renders basic circle/////////
 var Circle = /** @class */ (function (_super) {
     __extends(Circle, _super);
     function Circle(_label, _x, _y, _radius, _lineWidth, _lineColour, _isFilled, _fillColour) {
@@ -227,9 +254,10 @@ var Circle = /** @class */ (function (_super) {
         return _this;
     }
     return Circle;
-}(Module)); ///
-////////////////////////////////////
-///Polygon Module//////////////////
+}(Module)); //
+////////////////////////////////
+///Polygon Module/////////////////////
+///Renders polygon of defined points//
 var Polygon = /** @class */ (function (_super) {
     __extends(Polygon, _super);
     function Polygon(_label, _x, _y, _pointList, _lineWidth, _lineColour, _isFilled, _fillColour) {
@@ -277,11 +305,54 @@ var Polygon = /** @class */ (function (_super) {
         return _this;
     }
     return Polygon;
-}(Module)); ///
-////////////////////////////////////
+}(Module)); //////
+/////////////////////////////////////
+///Follow Mouse Module//////////////////////////
+///Sets game objects transform to mouse coords//
+var FollowMouse = /** @class */ (function (_super) {
+    __extends(FollowMouse, _super);
+    function FollowMouse() {
+        var _this = _super !== null && _super.apply(this, arguments) || this;
+        _this.Update = function (_engine, _obj, _ctx) {
+            _obj.Transform.pos.x = mouseX;
+            _obj.Transform.pos.y = mouseY;
+        };
+        return _this;
+    }
+    return FollowMouse;
+}(Module)); /////////////
+////////////////////////////////////////////////
+///Move On Click Module/////////////////////////
+///Teleports object to mouse position on click//
+var MoveOnClick = /** @class */ (function (_super) {
+    __extends(MoveOnClick, _super);
+    function MoveOnClick() {
+        var _this = _super !== null && _super.apply(this, arguments) || this;
+        _this.OnMouseDown = function (_engine, _obj) {
+            _obj.Transform.pos.x = mouseX;
+            _obj.Transform.pos.y = mouseY;
+        };
+        return _this;
+    }
+    return MoveOnClick;
+}(Module)); /////////////
+////////////////////////////////////////////////
 var GameObject = /** @class */ (function () {
     function GameObject(_gameObject, _id) {
         var _this = this;
+        this.OnMouseDown = function (_engine) {
+            for (var _i = 0, _a = _this.gameObject.modules; _i < _a.length; _i++) {
+                var mod = _a[_i];
+                mod.OnMouseDown(_engine, _this.gameObject);
+            }
+        };
+        this.OnMouseUp = function (_engine) {
+            for (var _i = 0, _a = _this.gameObject.modules; _i < _a.length; _i++) {
+                var mod = _a[_i];
+                mod.OnMouseUp(_engine, _this.gameObject);
+            }
+        };
+        //TODO: Gameobject may need an awake function
         //TODO: Remove if nothing else is added or leave if needed for support of child objects
         this.Update = function (ctx) {
             _this.gameObject.Update(ctx);
@@ -299,6 +370,18 @@ var Engine = /** @class */ (function () {
             _this.time = new Time();
             _this.gameWindow.InitialiseCanvas();
             _this.gameObjects = new Array();
+        };
+        this.OnMouseDown = function () {
+            for (var _i = 0, _a = _this.gameObjects; _i < _a.length; _i++) {
+                var obj = _a[_i];
+                obj.OnMouseDown(_this);
+            }
+        };
+        this.OnMouseUp = function () {
+            for (var _i = 0, _a = _this.gameObjects; _i < _a.length; _i++) {
+                var obj = _a[_i];
+                obj.OnMouseUp(_this);
+            }
         };
         this.Update = function () {
             _this.time.CalcFPS();
@@ -349,9 +432,9 @@ window.onload = function () {
 };
 function pTestPrefab() {
     //Basic game object with 2 rectangles and a circle
-    var rect = new Rectangle("rect", 10, 10, 200, 100, 2, "red", false);
+    var rect = new Rectangle("rect", 0, 0, 200, 100, 2, "red", true);
     var rect2 = new Rectangle("rect2", 50, 50, 80, 300, 2, "blue", true, "green");
-    var circ = new Circle("circ", 20, 60, 50, 5, "black", true, "orange");
+    var circ = new Circle("circ", 0, 0, 50, 5, "black", true, "orange");
     var pointList = new Array();
     var p1 = new vec2(10, 50);
     var p2 = new vec2(60, 30);
@@ -362,7 +445,7 @@ function pTestPrefab() {
     pointList.push(p2);
     pointList.push(p4);
     var poly = new Polygon("poly", 20, 60, pointList, 3, "black", true, "blue");
-    var obj = new Prefab(new vec2(0, 0), new vec2(1, 1));
+    var obj = new Prefab(new vec2(50, 50), new vec2(1, 1));
     obj.AddModule(rect);
     obj.AddModule(rect2);
     obj.AddModule(circ);
@@ -376,8 +459,8 @@ function CreateInitialGameObjects() {
     engine.Instantiate(pTestPrefab());
     //Or it can be created through the prefab function then modified before being instantiated
     var otherTwoRect = pTestPrefab();
-    otherTwoRect.Transform.pos.x = 200;
-    otherTwoRect.Transform.pos.y = 200;
+    otherTwoRect.Transform.pos.x = engine.gameWindow.windowWidth / 2;
+    otherTwoRect.Transform.pos.y = engine.gameWindow.windowHeight / 2;
     otherTwoRect.Transform.scale.x = 2;
     otherTwoRect.Transform.scale.y = 2;
     engine.Instantiate(otherTwoRect);
