@@ -122,6 +122,26 @@ function OnMouseUpdate(e) {
 }
 /////////////////////////////////////////////////////////////
 
+///Tracks keyboard events////////////////////////////////////
+document.addEventListener('keydown', OnKeyDown);
+document.addEventListener('keyup', OnKeyUp);
+document.addEventListener('keypress', OnKeyPress);
+let lastKey: number = -1;
+
+function OnKeyDown(e: KeyboardEvent) {
+    if (e.keyCode != lastKey) {
+        lastKey = e.keyCode;
+        engine.OnKeyDown(e.keyCode);
+    }
+}
+function OnKeyUp(e: KeyboardEvent) {
+    lastKey = -1;
+    engine.OnKeyUp(e.keyCode);
+}
+function OnKeyPress(e: KeyboardEvent) {
+    engine.OnKeyPress(e.keyCode);
+}
+//////////////////////////////////////////////////////////////
 
 /* 
     ___  ___          _       _
@@ -145,6 +165,12 @@ class Module {
     public OnMouseDown = (_engine: Engine, _obj: Prefab): void => {
     }
     public OnMouseUp = (_engine: Engine, _obj: Prefab): void => {
+    }
+    public OnKeyDown = (_engine: Engine, _obj: Prefab, _keyCode: number): void => {
+    }
+    public OnKeyUp = (_engine: Engine, _obj: Prefab, _keyCode: number): void => {
+    }
+    public OnKeyPress = (_engine: Engine, _obj: Prefab, _keyCode: number): void => {
     }
     public Awake = (_engine: Engine, _obj: Prefab): void => {
     }
@@ -310,6 +336,36 @@ class MoveOnClick extends Module {
 }/////////////
 ////////////////////////////////////////////////
 
+///Basic Movement Module//////////////////////////
+///Very simple movement controls in 4 directions//
+class BasicMovement extends Module {
+    public speed: number = 500;
+
+    constructor(_label: string, _speed: number = 500) {
+        super(_label);
+        this.speed = _speed;
+    }
+
+    public OnKeyPress = (_engine: Engine, _obj: Prefab, _keyCode: number): void => {
+        console.log(_keyCode);
+        switch (_keyCode) {
+            case 97:
+                _obj.Transform.pos.x -= this.speed * engine.time.delta;
+                break;
+            case 119:
+                _obj.Transform.pos.y -= this.speed * engine.time.delta;
+                break;
+            case 100:
+                _obj.Transform.pos.x += this.speed * engine.time.delta;
+                break;
+            case 115:
+                _obj.Transform.pos.y += this.speed * engine.time.delta;
+                break;
+        }
+    }
+}/////////////
+//////////////////////////////////////////////////
+
 class GameObject {
     readonly id;
     public gameObject: Prefab;
@@ -326,6 +382,22 @@ class GameObject {
     public OnMouseUp = (_engine: Engine): void => {
         for (let mod of this.gameObject.modules) {
             mod.OnMouseUp(_engine, this.gameObject);
+        }
+    }
+
+    public OnKeyDown = (_engine: Engine,_keyCode:number): void => {
+        for (let mod of this.gameObject.modules) {
+            mod.OnKeyDown(_engine, this.gameObject, _keyCode);
+        }
+    }
+    public OnKeyUp = (_engine: Engine, _keyCode: number): void => {
+        for (let mod of this.gameObject.modules) {
+            mod.OnKeyUp(_engine, this.gameObject, _keyCode);
+        }
+    }
+    public OnKeyPress = (_engine: Engine, _keyCode: number): void => {
+        for (let mod of this.gameObject.modules) {
+            mod.OnKeyPress(_engine, this.gameObject, _keyCode);
         }
     }
 
@@ -363,6 +435,22 @@ class Engine {
     public OnMouseUp = (): void => {
         for (let obj of this.gameObjects) {
             obj.OnMouseUp(this);
+        }
+    }
+
+    public OnKeyDown = (_keyCode: number): void => {
+        for (let obj of this.gameObjects) {
+            obj.OnKeyDown(this, _keyCode);
+        }
+    }
+    public OnKeyUp = (_keyCode: number): void => {
+        for (let obj of this.gameObjects) {
+            obj.OnKeyUp(this, _keyCode);
+        }
+    }
+    public OnKeyPress = (_keyCode: number): void => {
+        for (let obj of this.gameObjects) {
+            obj.OnKeyPress(this, _keyCode);
         }
     }
 
@@ -418,11 +506,12 @@ window.onload = () => {
     GameLoop();
 };
 
-function pTestPrefab (): Prefab {
-    //Basic game object with 2 rectangles and a circle
+function pDefaultPrefab (): Prefab {
     let rect: Rectangle = new Rectangle("rect", 0, 0, 200, 100, 2, "red",true);
     let rect2: Rectangle = new Rectangle("rect2", 50, 50, 80, 300, 2, "blue", true, "green");
     let circ: Circle = new Circle("circ", 0, 0, 50, 5, "black", true, "orange");
+
+    let movement = new BasicMovement("move");
 
     let pointList = new Array<vec2>();
     let p1 = new vec2(10, 50);
@@ -436,6 +525,7 @@ function pTestPrefab (): Prefab {
     let poly: Polygon = new Polygon("poly", 20, 60, pointList, 3, "black", true, "blue");
 
     var obj: Prefab = new Prefab(new vec2(50, 50), new vec2(1, 1));
+    obj.AddModule(movement);
     obj.AddModule(rect);
     obj.AddModule(rect2);
     obj.AddModule(circ);
@@ -449,10 +539,10 @@ function CreateInitialGameObjects() {
 
     //A game object can be created from a prefab by calling the prefab declaration directly
     //This will create it exactly how it is defined
-    engine.Instantiate(pTestPrefab());
+    engine.Instantiate(pDefaultPrefab());
 
     //Or it can be created through the prefab function then modified before being instantiated
-    let otherTwoRect = pTestPrefab();
+    let otherTwoRect = pDefaultPrefab();
     otherTwoRect.Transform.pos.x = engine.gameWindow.windowWidth/2;
     otherTwoRect.Transform.pos.y = engine.gameWindow.windowHeight / 2;
     otherTwoRect.Transform.scale.x = 2;

@@ -128,6 +128,25 @@ function OnMouseUpdate(e) {
     mouseY = e.pageY;
 }
 /////////////////////////////////////////////////////////////
+///Tracks keyboard events////////////////////////////////////
+document.addEventListener('keydown', OnKeyDown);
+document.addEventListener('keyup', OnKeyUp);
+document.addEventListener('keypress', OnKeyPress);
+var lastKey = -1;
+function OnKeyDown(e) {
+    if (e.keyCode != lastKey) {
+        lastKey = e.keyCode;
+        engine.OnKeyDown(e.keyCode);
+    }
+}
+function OnKeyUp(e) {
+    lastKey = -1;
+    engine.OnKeyUp(e.keyCode);
+}
+function OnKeyPress(e) {
+    engine.OnKeyPress(e.keyCode);
+}
+//////////////////////////////////////////////////////////////
 /*
     ___  ___          _       _
     |  \/  |         | |     | |
@@ -143,6 +162,12 @@ var Module = /** @class */ (function () {
         this.OnMouseDown = function (_engine, _obj) {
         };
         this.OnMouseUp = function (_engine, _obj) {
+        };
+        this.OnKeyDown = function (_engine, _obj, _keyCode) {
+        };
+        this.OnKeyUp = function (_engine, _obj, _keyCode) {
+        };
+        this.OnKeyPress = function (_engine, _obj, _keyCode) {
         };
         this.Awake = function (_engine, _obj) {
         };
@@ -337,6 +362,37 @@ var MoveOnClick = /** @class */ (function (_super) {
     return MoveOnClick;
 }(Module)); /////////////
 ////////////////////////////////////////////////
+///Basic Movement Module//////////////////////////
+///Very simple movement controls in 4 directions//
+var BasicMovement = /** @class */ (function (_super) {
+    __extends(BasicMovement, _super);
+    function BasicMovement(_label, _speed) {
+        if (_speed === void 0) { _speed = 500; }
+        var _this = _super.call(this, _label) || this;
+        _this.speed = 500;
+        _this.OnKeyPress = function (_engine, _obj, _keyCode) {
+            console.log(_keyCode);
+            switch (_keyCode) {
+                case 97:
+                    _obj.Transform.pos.x -= _this.speed * engine.time.delta;
+                    break;
+                case 119:
+                    _obj.Transform.pos.y -= _this.speed * engine.time.delta;
+                    break;
+                case 100:
+                    _obj.Transform.pos.x += _this.speed * engine.time.delta;
+                    break;
+                case 115:
+                    _obj.Transform.pos.y += _this.speed * engine.time.delta;
+                    break;
+            }
+        };
+        _this.speed = _speed;
+        return _this;
+    }
+    return BasicMovement;
+}(Module)); /////////////
+//////////////////////////////////////////////////
 var GameObject = /** @class */ (function () {
     function GameObject(_gameObject, _id) {
         var _this = this;
@@ -350,6 +406,24 @@ var GameObject = /** @class */ (function () {
             for (var _i = 0, _a = _this.gameObject.modules; _i < _a.length; _i++) {
                 var mod = _a[_i];
                 mod.OnMouseUp(_engine, _this.gameObject);
+            }
+        };
+        this.OnKeyDown = function (_engine, _keyCode) {
+            for (var _i = 0, _a = _this.gameObject.modules; _i < _a.length; _i++) {
+                var mod = _a[_i];
+                mod.OnKeyDown(_engine, _this.gameObject, _keyCode);
+            }
+        };
+        this.OnKeyUp = function (_engine, _keyCode) {
+            for (var _i = 0, _a = _this.gameObject.modules; _i < _a.length; _i++) {
+                var mod = _a[_i];
+                mod.OnKeyUp(_engine, _this.gameObject, _keyCode);
+            }
+        };
+        this.OnKeyPress = function (_engine, _keyCode) {
+            for (var _i = 0, _a = _this.gameObject.modules; _i < _a.length; _i++) {
+                var mod = _a[_i];
+                mod.OnKeyPress(_engine, _this.gameObject, _keyCode);
             }
         };
         //TODO: Gameobject may need an awake function
@@ -381,6 +455,24 @@ var Engine = /** @class */ (function () {
             for (var _i = 0, _a = _this.gameObjects; _i < _a.length; _i++) {
                 var obj = _a[_i];
                 obj.OnMouseUp(_this);
+            }
+        };
+        this.OnKeyDown = function (_keyCode) {
+            for (var _i = 0, _a = _this.gameObjects; _i < _a.length; _i++) {
+                var obj = _a[_i];
+                obj.OnKeyDown(_this, _keyCode);
+            }
+        };
+        this.OnKeyUp = function (_keyCode) {
+            for (var _i = 0, _a = _this.gameObjects; _i < _a.length; _i++) {
+                var obj = _a[_i];
+                obj.OnKeyUp(_this, _keyCode);
+            }
+        };
+        this.OnKeyPress = function (_keyCode) {
+            for (var _i = 0, _a = _this.gameObjects; _i < _a.length; _i++) {
+                var obj = _a[_i];
+                obj.OnKeyPress(_this, _keyCode);
             }
         };
         this.Update = function () {
@@ -435,6 +527,7 @@ function pTestPrefab() {
     var rect = new Rectangle("rect", 0, 0, 200, 100, 2, "red", true);
     var rect2 = new Rectangle("rect2", 50, 50, 80, 300, 2, "blue", true, "green");
     var circ = new Circle("circ", 0, 0, 50, 5, "black", true, "orange");
+    var movement = new BasicMovement("move");
     var pointList = new Array();
     var p1 = new vec2(10, 50);
     var p2 = new vec2(60, 30);
@@ -446,6 +539,7 @@ function pTestPrefab() {
     pointList.push(p4);
     var poly = new Polygon("poly", 20, 60, pointList, 3, "black", true, "blue");
     var obj = new Prefab(new vec2(50, 50), new vec2(1, 1));
+    obj.AddModule(movement);
     obj.AddModule(rect);
     obj.AddModule(rect2);
     obj.AddModule(circ);
